@@ -2,7 +2,8 @@
 from tkinter import *
 from threading import *
 from sqlite3 import *
-
+import re
+import re
 # tk init
 root = Tk()
 root.title("contacts")
@@ -31,20 +32,28 @@ getPhoneNumber = StringVar()
 
 # classes
 class User:
-    def __init__(self,name,phoneNumber):
+    def __init__(self,name,phoneNumber:str):
         self.name = name
         self.phoneNumber = phoneNumber
+        self.pattern = r"^09[0-9]{9}"
     def save(self):
-        row = cur.execute("select * from contacts where name=?",(self.name,)).fetchone()
-        if not row:
-            cur.execute("insert into contacts(name,phoneNumber) values (?,?)",(self.name,self.phoneNumber))
-            cnn.commit()
-            result.config(text="!!مخاطب ذخیره شد",fg="green")
-            t = Timer(5,lambda:result.config(text="",fg="black"))
-            t.start()
+        if re.match(self.pattern,self.phoneNumber):
+            row = cur.execute("select * from contacts where name=?",(self.name,)).fetchone()
+            if not row:
+                cur.execute("insert into contacts(name,phoneNumber) values (?,?)",(self.name,self.phoneNumber))
+                cnn.commit()
+                result.config(text="!!مخاطب ذخیره شد",fg="green")
+                t = Timer(5,lambda:result.config(text="",fg="black"))
+                t.start()
+            else:
+                result.config(text="!مخاطبی با این اسم وجود دارد",fg="black")
+                t = Timer(5,lambda:result.config(text=""))
+                t.start()
+            getAllContacts()
         else:
-            result.config(text="!مخاطبی با این اسم وجود دارد",fg="black")
+            result.config(text="!!فرمت شماره تلفن نادرست است",fg="red")
             t = Timer(5,lambda:result.config(text=""))
+            phoneNumber.delete(0,END)
             t.start()
     def delete(self):
         row = cur.execute("select * from contacts where name=?",(self.name,)).fetchone()
@@ -99,6 +108,8 @@ class User:
             result.config(text="!مخاطبی با این اسم وجود ندارد",fg="black")
             t = Timer(5,lambda:result.config(text=""))
             t.start()
+    
+        
             
         
 # functions
@@ -106,6 +117,7 @@ def dt(name,window):
     window.destroy()
     cur.execute("delete from contacts where name=?",(name,))
     cnn.commit()
+    print("dt",getAllContacts())
     result.config(text="!!مخاطب با موفقیت حذف شد",fg="green")
     t = Timer(3,lambda:result.config(text="",fg="black"))
     t.start()
@@ -113,6 +125,7 @@ def upToDate(newName,newPhoneNumber,oldName,window):
     window.destroy()
     cur.execute("update contacts set name=?,phoneNumber=? where name=?",(newName,newPhoneNumber,oldName))
     cnn.commit()
+    print("upToDate",getAllContacts())
     result.config(text="!مخاطب با موفقیت بروزرسانی شد",fg="green")
     t = Timer(5,lambda:result.config(text="",fg="black"))
     t.start()
@@ -181,6 +194,8 @@ Label(root,text=":لیست مخاطبین شما",font=("vazir",15),bg="white").
 frame = Frame(root,bg="white")
 frame.grid(row=4,column=0,columnspan=4)
 def getAllContacts():
+    for widget in frame.winfo_children():
+        widget.destroy()
     Label(frame,text="آیدی",font=("vazir",15),bg="white").grid(row=0,column=3,padx=(400,0))
     Label(frame,text="اسم",font=("vazir",15),bg="white").grid(row=0,column=2)
     Label(frame,text="شماره تلفن",font=("vazir",15),bg="white").grid(row=0,column=1,padx=(0,400))
@@ -191,6 +206,7 @@ def getAllContacts():
         Label(frame,text=f"{row[1]}",bg="white",font=("vazir",10)).grid(row=r,column=2)
         Label(frame,text=f"{row[2]}",bg="white",font=("vazir",10)).grid(row=r,column=1,padx=(0,400))
         r += 1
+    return True
 
 getAllContacts()
 # mainloop
