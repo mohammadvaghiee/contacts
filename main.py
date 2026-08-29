@@ -32,7 +32,7 @@ getPhoneNumber = StringVar()
 
 # classes
 class User:
-    def __init__(self,name,phoneNumber:str):
+    def __init__(self,name,phoneNumber):
         self.name = name
         self.phoneNumber = phoneNumber
         self.pattern = r"^09[0-9]{9}"
