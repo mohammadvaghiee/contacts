@@ -3,7 +3,7 @@ from tkinter import *
 from threading import *
 from sqlite3 import *
 import re
-import re
+import os
 # tk init
 root = Tk()
 root.title("contacts")
@@ -12,9 +12,15 @@ root.config(bg="white")
 root.grid_columnconfigure(0,weight=1)
 root.grid_columnconfigure(1,weight=1)
 root.grid_columnconfigure(2,weight=1)
+root.minsize(1300,600)
 
 # sqlite init
-cnn = connect(r"F:\contact_with_sqlite_and_tk_and_venv\database.db")
+try:
+    cnn = connect(fr"{os.path.splitdrive(os.path.abspath(__file__))[0]}"+r"\contact_with_sqlite_and_tk_and_venv\database.db")
+except OperationalError as err:
+    print("خطا در اتصال به دیتابیس: ",err.sqlite_errorname)
+else:
+    print("database connection sucessful!")
 cur = cnn.cursor()
 cnn.execute("""
 CREATE TABLE IF NOT EXISTS "contacts" (
@@ -35,7 +41,7 @@ class User:
     def __init__(self,name,phoneNumber):
         self.name = name
         self.phoneNumber = phoneNumber
-        self.pattern = r"^09[0-9]{9}"
+        self.pattern = r"^09[0-9]{9}$"
     def save(self):
         if re.match(self.pattern,self.phoneNumber):
             row = cur.execute("select * from contacts where name=?",(self.name,)).fetchone()
@@ -55,6 +61,7 @@ class User:
             t = Timer(5,lambda:result.config(text=""))
             phoneNumber.delete(0,END)
             t.start()
+
     def delete(self):
         row = cur.execute("select * from contacts where name=?",(self.name,)).fetchone()
         if not row:
